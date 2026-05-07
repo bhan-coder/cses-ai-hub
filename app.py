@@ -1,124 +1,184 @@
-import streamlit as st
-import urllib.request
-import urllib.parse
-import json
-import difflib
-
-# 1. 페이지 설정 및 디자인 (CSS 주입)
-st.set_page_config(page_title="CSES Insight Hub", page_icon="💡", layout="wide")
-
-# 아까 보여주신 디자인과 비슷하게 만들기 위한 커스텀 스타일
-st.markdown("""
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSES AI Insight Hub | 맞춤형 교육 추천</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
-    /* 메인 배경 및 폰트 설정 */
-    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700&display=swap');
-    html, body, [class*="css"] { font-family: 'Pretendard', sans-serif; background-color: #F9FAFB; }
-    
-    /* 카드 디자인 */
-    .news-card {
-        background-color: white;
-        padding: 24px;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-        border: 1px solid #F3F4F6;
-        transition: transform 0.2s;
-    }
-    .news-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-    
-    /* 태그 디자인 */
-    .tag {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        margin-bottom: 12px;
-    }
-    .tag-ai { background-color: #FEE2E2; color: #EF4444; } /* AI 뉴스 태그 */
-    .tag-edu { background-color: #ECFDF5; color: #10B981; } /* 교육 태그 */
-    
-    /* 제목 및 텍스트 스타일 */
-    .card-title { font-size: 20px; font-weight: 700; color: #111827; margin-bottom: 8px; text-decoration: none; }
-    .card-desc { font-size: 15px; color: #4B5563; line-height: 1.6; }
-    .card-link { color: #3B82F6; font-weight: 600; text-decoration: none; font-size: 14px; }
-    
-    /* 상단 헤더 섹션 */
-    .header-box { background-color: white; padding: 40px; border-radius: 24px; margin-bottom: 40px; border: 1px solid #E5E7EB; }
-    .header-title { font-size: 42px; font-weight: 800; color: #111827; }
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .bg-cses-pink { background-color: #E6005A; }
+        .text-cses-pink { color: #E6005A; }
+        .border-cses-pink { border-color: #E6005A; }
+        .bg-warm-base { background-color: #FAF9F7; }
+        .hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .hover-lift:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(230, 0, 90, 0.1); }
     </style>
-    """, unsafe_allow_html=True)
+</head>
+<body class="bg-warm-base text-gray-900">
 
-# 2. 상단 헤더 섹션 (이미지와 비슷한 레이아웃)
-with st.container():
-    st.markdown("""
-        <div class="header-box">
-            <p style="color: #EF4444; font-weight: bold; margin-bottom: 10px;">CSES Insight Hub</p>
-            <h1 class="header-title">연구원을 위한<br>AI 인사이트 스테이션</h1>
-            <p style="color: #6B7280; font-size: 18px; margin-top: 20px;">네이버 뉴스 기반의 실시간 기술 동향과 맞춤형 교육 정보를 큐레이션합니다.</p>
+    <header class="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-black text-cses-pink">CSES INSIGHT</span>
+            </div>
+            <nav class="hidden md:flex gap-10 text-sm font-bold text-gray-600">
+                <a href="#" class="hover:text-cses-pink">홈</a>
+                <a href="#diagnosis" class="text-cses-pink">AI 교육 진단</a>
+                <a href="#" class="hover:text-cses-pink">AI 뉴스</a>
+            </nav>
         </div>
-    """, unsafe_allow_html=True)
+    </header>
 
-# 3. 탭 메뉴 구성
-tab1, tab2 = st.tabs(["📰 AI 뉴스 센터", "🎓 교육 스테이션"])
+    <section class="pt-32 pb-12 px-6">
+        <div class="max-w-7xl mx-auto text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">나에게 꼭 맞는 <span class="text-cses-pink">AI 성장 경로</span>를 찾아보세요</h1>
+            <p class="text-gray-500">K-MOOC, KPC, KSA의 검증된 교육 과정을 추천해 드립니다.</p>
+        </div>
+    </section>
 
-# --- 탭 1: 뉴스 센터 ---
-with tab1:
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.subheader("최신 기술 동향")
-    with col2:
-        btn = st.button("🔄 실시간 뉴스 업데이트", use_container_width=True)
+    <section id="diagnosis" class="py-12 px-6">
+        <div class="max-w-4xl mx-auto">
+            <div id="diagnosisCard" class="bg-white p-8 md:p-12 rounded-[40px] shadow-xl shadow-pink-100/50 border border-pink-50">
+                
+                <div id="step1">
+                    <span class="text-cses-pink font-bold text-sm tracking-widest">STEP 01</span>
+                    <h3 class="text-2xl font-bold mt-2 mb-8">관심 있는 연구 분야를 선택해주세요.</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button onclick="nextStep('데이터 리터러시')" class="p-6 border rounded-2xl text-left hover:border-cses-pink hover:bg-pink-50 transition group flex justify-between items-center">
+                            <span class="font-bold text-lg">데이터 리터러시</span>
+                            <span class="text-cses-pink opacity-0 group-hover:opacity-100">→</span>
+                        </button>
+                        <button onclick="nextStep('생성형 AI')" class="p-6 border rounded-2xl text-left hover:border-cses-pink hover:bg-pink-50 transition group flex justify-between items-center">
+                            <span class="font-bold text-lg">생성형 AI 모델링</span>
+                            <span class="text-cses-pink opacity-0 group-hover:opacity-100">→</span>
+                        </button>
+                        <button onclick="nextStep('AI 거버넌스')" class="p-6 border rounded-2xl text-left hover:border-cses-pink hover:bg-pink-50 transition group flex justify-between items-center">
+                            <span class="font-bold text-lg">AI 윤리 및 거버넌스</span>
+                            <span class="text-cses-pink opacity-0 group-hover:opacity-100">→</span>
+                        </button>
+                        <button onclick="nextStep('비즈니스 전략')" class="p-6 border rounded-2xl text-left hover:border-cses-pink hover:bg-pink-50 transition group flex justify-between items-center">
+                            <span class="font-bold text-lg">AI 비즈니스 전략</span>
+                            <span class="text-cses-pink opacity-0 group-hover:opacity-100">→</span>
+                        </button>
+                    </div>
+                </div>
 
-    if btn:
-        with st.spinner("언론사별 데이터를 수집 중..."):
-            client_id = "_HfjBuozxC3_KxW5BErl"
-            client_secret = "kjeNP9XVUe"
-            keyword = "인공지능 AI 신기술"
-            encText = urllib.parse.quote(keyword)
-            target_media_domains = ["yna.co.kr", "donga.com", "joongang.co.kr", "chosun.com", "hankookilbo.com"]
-            final_news_list = []
+                <div id="step2" class="hidden">
+                    <span class="text-cses-pink font-bold text-sm tracking-widest">STEP 02</span>
+                    <h3 class="text-2xl font-bold mt-2 mb-8">현재 본인의 역량 수준은 어떤가요?</h3>
+                    <div class="space-y-4">
+                        <button onclick="showResult('입문')" class="w-full p-6 border rounded-2xl text-left hover:border-cses-pink hover:bg-pink-50 transition">
+                            <p class="font-bold text-lg">Beginner (입문/기초)</p>
+                            <p class="text-sm text-gray-500 mt-1">기본 개념을 익히고 활용 사례를 배우고 싶습니다.</p>
+                        </button>
+                        <button onclick="showResult('심화')" class="w-full p-6 border rounded-2xl text-left hover:border-cses-pink hover:bg-pink-50 transition">
+                            <p class="font-bold text-lg">Advanced (중급/심화)</p>
+                            <p class="text-sm text-gray-500 mt-1">실무 모델링이나 전문 표준/인증 과정을 희망합니다.</p>
+                        </button>
+                    </div>
+                </div>
 
-            for start_idx in range(1, 201, 100):
-                url = f"https://openapi.naver.com/v1/search/news.json?query={encText}&display=100&start={start_idx}&sort=sim"
-                request = urllib.request.Request(url)
-                request.add_header("X-Naver-Client-Id", client_id)
-                request.add_header("X-Naver-Client-Secret", client_secret)
-                try:
-                    response = urllib.request.urlopen(request)
-                    result = json.loads(response.read().decode('utf-8'))
-                    for item in result['items']:
-                        title = item['title'].replace("<b>", "").replace("</b>", "").replace("&quot;", "\"")
-                        link = item['originallink']
-                        desc = item['description'].replace("<b>", "").replace("</b>", "").replace("&quot;", "\"")
-                        if not any(domain in link for domain in target_media_domains): continue
-                        if any(difflib.SequenceMatcher(None, title, news['title']).ratio() > 0.6 for news in final_news_list): continue
-                        final_news_list.append({'title': title, 'desc': desc, 'link': link})
-                        if len(final_news_list) >= 6: break
-                except: pass
-                if len(final_news_list) >= 6: break
+                <div id="result" class="hidden">
+                    <div class="text-center mb-10">
+                        <div class="inline-block p-4 bg-pink-50 rounded-full text-cses-pink mb-4">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <h3 class="text-3xl font-bold mb-2">맞춤 교육 추천 리스트</h3>
+                        <p id="resultIntro" class="text-gray-600"></p>
+                    </div>
 
-            # 디자인된 카드 형태로 뉴스 출력
-            if final_news_list:
-                cols = st.columns(2) # 2열 격자로 배치
-                for i, news in enumerate(final_news_list):
-                    with cols[i % 2]:
-                        st.markdown(f"""
-                            <div class="news-card">
-                                <span class="tag tag-ai">AI 뉴스</span>
-                                <div class="card-title">{news['title']}</div>
-                                <p class="card-desc">{news['desc'][:100]}...</p>
-                                <a href="{news['link']}" target="_blank" class="card-link">기사 원문 보기 →</a>
-                            </div>
-                        """, unsafe_allow_html=True)
+                    <div id="courseContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        </div>
 
-# --- 탭 2: 교육 스테이션 ---
-with tab2:
-    st.subheader("추천 교육 프로그램")
-    
-    # 교육 카드 렌더링
-    edu_list = [
-        {"provider": "KIRD", "title": "AI 리서치 자동화 기초", "tag": "무료", "desc": "생성형 AI를 활용한 효율적인 자료 수집 및 분석 노하우"},
-        {"provider": "KSA", "title": "AI 경영시스템 표준화", "tag": "유료", "desc": "ISO 42001 기반의 AI 신뢰성 및 거버넌스 구축 전략"},
-        {"provider": "통계교육원", "title": "R을 활용한 데이터 분석", "tag": "무료", "desc": "통계 에디팅 및 비정형 데이터 정제 실무 과정"}
-    ]
+                    <div class="text-center mt-12">
+                        <button onclick="resetDiagnosis()" class="text-sm font-bold text-gray-400 hover:text-cses-pink underline underline-offset-4">다시 진단하기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        let selectedField = '';
+        
+        // 교육 데이터베이스
+        const courseData = {
+            '데이터 리터러시': {
+                '입문': [
+                    { platform: 'KPC', title: '빅데이터 분석 및 시각화 실무', link: 'https://www.kpc.or.kr/edu/CourseDetail.do?pCourseId=65588', desc: '데이터 수집부터 시각화까지 핵심 기초 습득' },
+                    { platform: 'K-MOOC', title: '인공지능의 기초 및 활용', link: 'https://www.kmooc.kr/view/course/detail/11696', desc: '비전공자도 이해하는 AI와 데이터의 기본 원리' }
+                ],
+                '심화': [
+                    { platform: 'KPC', title: '파이썬 활용 빅데이터 분석 실무', link: 'https://www.kpc.or.kr/edu/CourseDetail.do?pCourseId=65604', desc: '파이썬을 이용한 전문적인 데이터 통계 분석' }
+                ]
+            },
+            '생성형 AI': {
+                '입문': [
+                    { platform: 'KPC', title: '생성형 AI 활용 업무 혁신', link: 'https://www.kpc.or.kr/edu/CourseDetail.do?pCourseId=66324', desc: 'ChatGPT 등 생성형 AI를 실무에 즉시 적용하기' }
+                ],
+                '심화': [
+                    { platform: 'K-MOOC', title: '딥러닝을 이용한 자연어 처리', link: 'https://www.kmooc.kr/view/course/detail/10542', desc: 'Transformer 및 최신 언어 모델 연구 구현' },
+                    { platform: 'K-MOOC', title: '실무자를 위한 딥러닝 응용', link: 'https://www.kmooc.kr/view/course/detail/12100', desc: '복잡한 딥러닝 모델의 최적화 및 배포 방법' }
+                ]
+            },
+            'AI 거버넌스': {
+                '입문': [
+                    { platform: 'KSA', title: 'AI 신뢰성 및 윤리 가이드라인', link: 'https://www.ksaedu.or.kr/course/course_list.html?cate=001', desc: '안전한 AI 도입을 위한 기본 규범 및 윤리 이해' }
+                ],
+                '심화': [
+                    { platform: 'KSA', title: 'ISO/IEC 42001 (AI 경영시스템) 실무', link: 'https://www.ksaedu.or.kr/course/course_view.html?id=2534', desc: '국제 표준에 기반한 AI 경영 시스템 구축 및 인증' }
+                ]
+            },
+            '비즈니스 전략': {
+                '입문': [
+                    { platform: 'KPC', title: 'AI 비즈니스 모델 수립 실무', link: 'https://www.kpc.or.kr/edu/CourseDetail.do?pCourseId=65604', desc: 'AI 기술을 사업화 전략으로 연결하는 방법' }
+                ],
+                '심화': [
+                    { platform: 'KSA', title: 'AI 산업 표준화 동향 및 전략', link: 'https://www.ksaedu.or.kr/main.html', desc: '글로벌 표준 전쟁 속에서 우위를 점하는 기술 전략' }
+                ]
+            }
+        };
+
+        function nextStep(field) {
+            selectedField = field;
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+        }
+
+        function showResult(level) {
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('result').classList.remove('hidden');
+            
+            const intro = document.getElementById('resultIntro');
+            intro.innerHTML = `<strong>${selectedField}</strong> 분야의 <strong>${level}</strong> 전문가를 목표로 하는<br>연구원님께 다음 교육 과정을 추천합니다.`;
+
+            const container = document.getElementById('courseContainer');
+            container.innerHTML = '';
+
+            const recommendations = courseData[selectedField][level];
+            
+            recommendations.forEach(course => {
+                const card = `
+                    <div class="hover-lift bg-warm-base p-6 rounded-3xl border border-gray-100 flex flex-col h-full">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] font-bold px-3 py-1 rounded-full border border-cses-pink text-cses-pink bg-white uppercase tracking-tighter">${course.platform}</span>
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${level}</span>
+                        </div>
+                        <h4 class="text-xl font-bold mb-3 leading-tight">${course.title}</h4>
+                        <p class="text-sm text-gray-500 mb-8 flex-grow leading-relaxed">${course.desc}</p>
+                        <a href="${course.link}" target="_blank" class="w-full bg-cses-pink text-white py-4 rounded-2xl font-bold text-center hover:opacity-90 transition shadow-lg shadow-pink-200">강의 바로가기</a>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        function resetDiagnosis() {
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('step1').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

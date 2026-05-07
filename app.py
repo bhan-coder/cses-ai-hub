@@ -19,7 +19,7 @@ if st.button("🔄 오늘의 AI 인사이트 리포트 생성하기", type="prim
         # 1. API 설정
         gemini_api_key = "AIzaSyCZJy6Lw9LZjfVc2sAqbv7elVSH8PFbwnU" # 연구원님 키
         genai.configure(api_key=gemini_api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash') # 안정적인 모델로 설정
+        model = genai.GenerativeModel('gemini-1.0-pro') # 안정적인 모델로 설정
 
         client_id = "_HfjBuozxC3_KxW5BErl"  
         client_secret = "kjeNP9XVUe"        
